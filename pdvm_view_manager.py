@@ -1,4 +1,4 @@
-import logging
+# pdvm_view_manager.py
 import json
 import importlib
 from typing import Optional, Dict, List, Tuple
@@ -7,13 +7,17 @@ from datetime import date
 from pdvm_datenbank import PdvmDatenbank as PdvmDB
 import pd_datetime as dt  # Enthält PdvmDateTimeNow()
 
-# Logging konfigurieren
+# Logging-Setup
+import logging
 logging.basicConfig(
-    level=logging.INFO, 
-    format="%(asctime)s %(levelname)-8s %(name)s: %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.FileHandler("pdvm_app.log"),
+        logging.StreamHandler()
+    ]
 )
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 def has_content(eintrag: dict, suchfelder: List[str], debug: bool = False) -> bool:
     """
@@ -22,7 +26,7 @@ def has_content(eintrag: dict, suchfelder: List[str], debug: bool = False) -> bo
     for feld in suchfelder:
         wert = eintrag.get(feld)
         if debug:
-            logger.debug(f"Prüfe Feld '{feld}': Wert = {wert!r}")
+            logging.debug(f"Prüfe Feld '{feld}': Wert = {wert!r}")
         if wert is None:
             continue
         if isinstance(wert, str) and wert.strip() == "":
@@ -40,13 +44,13 @@ def get_pdvm_instance(class_name: str, guid: str):
         cls = getattr(mod, class_name)
         return cls(guid)
     except (ImportError, AttributeError) as e:
-        logger.error(f"Fehler beim dynamischen Import von {class_name}: {e}")
+        logging.error(f"Fehler beim dynamischen Import von {class_name}: {e}")
         return None
 
 
 class PdvmViewManager:
     def __init__(self, call_daten: dict):
-        logger.info("PdvmViewManager initialisiert.")
+        logging.info("PdvmViewManager initialisiert.")
         self.call_daten = call_daten
         self.user_guid = call_daten.get("user_guid")
         self.view_guid = call_daten.get("view_guid")
@@ -126,7 +130,7 @@ class PdvmViewManager:
         - lookup_def["value"] = Name des Feldes in der JSON-Struktur
         - key                  = der tatsächliche Lookup-Key (z.B. 'w')
         """
-        logger.debug(f"get_lookup_display_value: {lookup_def}, key={key}")
+        logging.debug(f"get_lookup_display_value: {lookup_def}, key={key}")
 
         if not lookup_def or key is None:
             return ""
@@ -141,7 +145,7 @@ class PdvmViewManager:
         db  = PdvmDB("PdvmManager.db", tbl, hist=False)
         rec = db.lesen(tbl_id)
         if not rec:
-            logger.debug(f"Lookup-Datensatz {tbl_id} nicht gefunden in Tabelle {tbl}")
+            logging.debug(f"Lookup-Datensatz {tbl_id} nicht gefunden in Tabelle {tbl}")
             return str(key)
 
         # 1) Falls es im rec ein Feld "daten" gibt, darin JSON, sonst rec selbst nutzen
@@ -149,32 +153,32 @@ class PdvmViewManager:
         try:
             outer = json.loads(raw_outer) if isinstance(raw_outer, str) else (raw_outer or {})
         except json.JSONDecodeError:
-            logger.debug("JSON-Fehler beim Parsen von rec['daten']")
+            logging.debug("JSON-Fehler beim Parsen von rec['daten']")
             outer = {}
 
         # 2) Suche das Teil-Objekt (z.B. outer['anrede'])
         inner_raw = outer.get(value_key)
         if inner_raw is None:
-            logger.debug(f"Kein inneres Feld '{value_key}' in Lookup-Daten")
+            logging.debug(f"Kein inneres Feld '{value_key}' in Lookup-Daten")
             return str(key)
 
         # 3) Falls inner_raw wieder JSON-String ist, decodiere ihn
         try:
             inner = json.loads(inner_raw) if isinstance(inner_raw, str) else (inner_raw or {})
         except json.JSONDecodeError:
-            logger.debug(f"JSON-Fehler beim Parsen von inner_raw für '{value_key}'")
+            logging.debug(f"JSON-Fehler beim Parsen von inner_raw für '{value_key}'")
             return str(key)
 
         # 4) Liste der Werte
         werte = inner.get("werte", [])
         if not isinstance(werte, list):
-            logger.debug(f"Lookup-Feld 'werte' ist kein Array, sondern {type(werte)}")
+            logging.debug(f"Lookup-Feld 'werte' ist kein Array, sondern {type(werte)}")
             return str(key)
 
         # 5) Finde alle Einträge mit passendem key
         candidates = [w for w in werte if w.get("key") == key]
         if not candidates:
-            logger.debug(f"Kein Lookup-Wert matching key={key}")
+            logging.debug(f"Kein Lookup-Wert matching key={key}")
             return str(key)
 
         # 6) Historische Logik
@@ -187,13 +191,13 @@ class PdvmViewManager:
                 except (TypeError, ValueError):
                     continue
             if not valid:
-                logger.debug(f"Keine historischen Werte <= Stichtag gefunden für key={key}")
+                logging.debug(f"Keine historischen Werte <= Stichtag gefunden für key={key}")
                 return str(key)
             best = max(valid, key=lambda w: float(w.get("abdatum", 0)))
         else:
             best = candidates[0]
 
-        logger.debug(f"Lookup-Wert ausgewählt: {best}")
+        logging.debug(f"Lookup-Wert ausgewählt: {best}")
         # 7) Gib das deutsche Label zurück
         return best.get("de", str(key))
 
@@ -278,14 +282,14 @@ class PdvmViewManager:
             if searchable and not has_content(entry, searchable, debug=debug_skip):
                 skipped += 1
                 if debug_skip:
-                    logger.debug(f"Überspringe leeren Eintrag: {entry!r}")
+                    logging.debug(f"Überspringe leeren Eintrag: {entry!r}")
                 continue
 
             view_data.append(entry)
 
-        logger.info(f"Erzeugt {len(view_data)} Einträge für '{table}'.")
+        logging.info(f"Erzeugt {len(view_data)} Einträge für '{table}'.")
         if skipped:
-            logger.info(f"{skipped} Einträge übersprungen (leere Suchfelder).")
+            logging.info(f"{skipped} Einträge übersprungen (leere Suchfelder).")
 
         return view_data
 

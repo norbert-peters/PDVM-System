@@ -10,16 +10,17 @@ from functools import partial
 from PyQt5.QtCore import QTimer
 
 
+# Logging-Setup
 import logging
-
-# Logging konfigurieren
 logging.basicConfig(
-    level=logging.DEBUG, 
-    format="%(asctime)s %(levelname)-8s %(name)s: %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.FileHandler("pdvm_app.log"),
+        logging.StreamHandler()
+    ]
 )
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 
 class PdvmTableModel(QAbstractTableModel):
     """
@@ -283,7 +284,7 @@ class SearchListWidget(QWidget):
         super().resizeEvent(event)
 
     def _apply_column_widths(self):
-        logger.debug(f"Spaltenbreiten anwenden: {self.column_widths_applied}")
+        logging.debug(f"Spaltenbreiten anwenden: {self.column_widths_applied}")
         if self.column_widths_applied:
             return  # Nur 1× ausführen
         self.column_widths_applied = True
@@ -304,25 +305,25 @@ class SearchListWidget(QWidget):
             logging.debug(f"Pct_list {pct_list}")
 
         total_pct = sum(pct_list) or 1
-        logger.debug(f"Total Pct: {total_pct}")
+        logging.debug(f"Total Pct: {total_pct}")
         if total_pct == 0:
-            logger.debug("Keine Spaltenbreiten definiert, keine Anpassung.")
+            logging.debug("Keine Spaltenbreiten definiert, keine Anpassung.")
             return
         # Feste Basis-Breite über display_width
-        logger.debug(f"Display Width: {self.vm.display_width}")
+        logging.debug(f"Display Width: {self.vm.display_width}")
         dw = str(getattr(self.vm, "display_width", "100")).rstrip("%")
-        logger.debug(f"Display Width: {dw}")
+        logging.debug(f"Display Width: {dw}")
         if dw == "0":
-            logger.debug("Display Width ist 0%, keine Anpassung.")
+            logging.debug("Display Width ist 0%, keine Anpassung.")
             return
         try:
             dw_val = int(dw)
         except ValueError:
             dw_val = 100
-        logger.debug(f"Display Width Value: {dw_val}")
+        logging.debug(f"Display Width Value: {dw_val}")
         parent_w = self.parent().width() if self.parent() else self.width()
         full_width = round(parent_w * (dw_val / 100.0))
-        logger.debug(f"Full Width: {full_width}")
+        logging.debug(f"Full Width: {full_width}")
         self.table_view.setFixedWidth(full_width+20)  # +20 für Scrollbar
         self.table_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 

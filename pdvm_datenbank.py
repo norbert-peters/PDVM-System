@@ -1,7 +1,23 @@
+# -*- coding: utf-8 -*-
+# pdvm_datenbank.py
+
 import sqlite3
 import json
 import allgemeines as all  # Enthält all.neue_guid(), all.convert_from_time() 
 import pd_datetime as dt  # Enthält PdvmDateTimeNow()
+
+# looging setup
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.FileHandler("pdvm_app.log"),
+        logging.StreamHandler()
+    ]
+)
+
 
 class PdvmDatenbank:
     SYSTEM_USER_ID = "00000000-0000-0000-0000-000000000000"
@@ -11,9 +27,6 @@ class PdvmDatenbank:
         self.db_name    = db_name
         self.table_name = table_name
         self.hist       = hist
-#        self.only_table = False  # Nur Tabelle, keine Systemsteuerung
-#        self._erzeuge_tabelle()
-#        self.dt_instance = dt.Pdvm_DateTime("DEU")
 
     def _erzeuge_tabelle(self):
         """Erstellt die Tabelle, falls sie nicht existiert"""
@@ -39,27 +52,27 @@ class PdvmDatenbank:
         # Zeilenanzahl
         cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")
         row_count = cursor.fetchone()[0]
-        print(f"Anzahl der Zeilen in {self.table_name}: {row_count}")
+        logging.log(logging.INFO,f"Anzahl der Zeilen in {self.table_name}: {row_count}")
         # Gesamtgröße der JSON-Daten in Bytes
         cursor.execute(f"SELECT SUM(LENGTH(daten)) FROM {self.table_name}")
         size_bytes = cursor.fetchone()[0] or 0
-        print(f"Gesamtgröße der Daten in {self.table_name}: {size_bytes} Bytes")
+        logging.log(logging.INFO,f"Gesamtgröße der Daten in {self.table_name}: {size_bytes} Bytes")
         # Aktuelles Datum und Uhrzeit
         dt_instance = dt.Pdvm_DateTime("DEU")
         dt_instance.PdvmDateTime = 2025106.0    # fiktives Datum, damit intern Struktiur erzeugt wird
         current_time = dt_instance.PdvmDateTimeNow()
-        print(f"Aktuelle Zeit: {current_time}")
+        logging.log(logging.INFO,f"Aktuelle Zeit: {current_time}")
         conn.close()
 
         # Lade aktuellen Systemsteuerungs-Datensatz
         sys_db = PdvmDatenbank(self.db_name, table_name="systemsteuerung", hist=False)
         sys_record = sys_db.lesen(self.SYSTEM_USER_ID) 
-        print(f"Systemsteuerung-Datensatz: {sys_record}")
+        logging.log(logging.INFO,f"Systemsteuerung-Datensatz: {sys_record}")
 
         # Stelle sicher, dass der Eintrag für diese Tabelle existiert
         sys_record[self.table_name] = sys_record.get(self.table_name, {})
         # Setze Metriken
-        print(f"Setze Metriken für {self.table_name} in der Systemsteuerung")
+        logging.log(logging.INFO,f"Setze Metriken für {self.table_name} in der Systemsteuerung")
         sys_record[self.table_name].update({
             "last_change":    current_time, # Aktuelles Datum und Uhrzeit
             "row_count":      row_count,
@@ -125,7 +138,7 @@ class PdvmDatenbank:
         conn.close()
 
         # Systemsteuerung aktualisieren
-        print(f"Systemsteuerung aktualisieren für {self.table_name}")
+        logging.log(logging.INFO,f"Systemsteuerung aktualisieren für {self.table_name}")
         self._update_last_change()
 
     def loeschen(self, guid):
@@ -157,18 +170,18 @@ class PdvmDatenbank:
             except json.JSONDecodeError as e:
                 start = max(0, e.pos - 40)
                 end   = min(len(raw), e.pos + 40)
-                print("JSONDecodeError:", e)
-                print("…", raw[start:end], "…")
+                logging.log(logging.INFO,"JSONDecodeError:", e)
+                logging.log(logging.INFO,"…", raw[start:end], "…")
                 raise
             # Führe time-konvertierungen bei historischen Daten durch
             return all.convert_from_time(data) if self.hist else data
         else:
-            print(f"GUID {guid} nicht gefunden.")
+            logging.log(logging.INFO,f"GUID {guid} nicht gefunden.")
             return None
 
     def lesen_alle(self):
         """Liest alle Datensätze aus der Tabelle"""
-        print(f"Alle Datensätze aus {self.table_name} lesen")
+        logging.log(logging.INFO,f"Alle Datensätze aus {self.table_name} lesen")
         conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
         select_query = f'SELECT * FROM {self.table_name}'
@@ -213,16 +226,16 @@ if __name__ == "__main__":
 #    uid = db.anlegen({"Test": None})
 #    uid = "4886ad26-061b-4662-a762-c8c83f36692d"
 #    uid = "00000000-0000-0000-0000-000000000001"
-#    print(f"Erstellte GUID: {uid}")
+#    logging.log(logging.INFO,f"Erstellte GUID: {uid}")
 
     # Speichern eines Datensatzes
 #    db.speichern(uid, daten)
-#    print(f"Datensatz mit GUID {uid} gespeichert.")
+#    logging.log(logging.INFO,f"Datensatz mit GUID {uid} gespeichert.")
 
     # Lesen eines Datensatzes
 #    daten = db.lesen(uid)
-#    print(f"Gelesene Daten für GUID {uid}: {daten}")
+#    logging.log(logging.INFO,f"Gelesene Daten für GUID {uid}: {daten}")
 
     # Löschen eines Datensatzes
     #db.loeschen(uid)
-    #print(f"Datensatz mit GUID {uid} gelöscht.")
+    #logging.log(logging.INFO,f"Datensatz mit GUID {uid} gelöscht.")

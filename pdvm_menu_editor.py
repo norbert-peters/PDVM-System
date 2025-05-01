@@ -47,10 +47,10 @@ class MenuEditor(QWidget):
             ("Hinzufügen", self.add_entry),
             ("Bearbeiten", self.edit_entry),
             ("Löschen", self.delete_entry),
-            ("⬆", self.move_up),
-            ("⬇", self.move_down),
-            ("-- Ebene außen", self.move_out),
-            ("++ Ebene innen", self.move_in),
+#            ("⬆", self.move_up),
+#            ("⬇", self.move_down),
+#            ("-- Ebene außen", self.move_out),
+#            ("++ Ebene innen", self.move_in),
             ("Zusatzmenü", self.open_zusatz_menu),
             ("Speichern", self.save_changes)
         ]:

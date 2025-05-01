@@ -1,5 +1,5 @@
 # PDVM-Systemstart.py
-import sys
+import sys, io
 from pdvm_login import LoginApp
 from pdvm_menu_editor import MenuEditor
 from pdvm_view_manager import PdvmViewManager
@@ -13,10 +13,14 @@ from PyQt5.QtCore import Qt
 from command_handler import CommandHandler
 from menu_handler import MenuHandler
 
+# Umstellung auf UTF-8 für die Console
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+
 # Logging-Setup
 import logging
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
@@ -46,7 +50,8 @@ class MainApp(QMainWindow):
         self.setWindowTitle(f"PDVM System - Hauptanwendung - {self.user_name}")
 
         self.startmenu_id = self.user_daten.get("Anwendungen", {}).get("MeineApps")
-        logging.INFO(f"🔹 Starte mit Startmenu-ID: {self.startmenu_id}")
+        logging.log(logging.INFO, f"🔹 Starte mit Startmenu-ID: {self.startmenu_id}")
+
 
         # Zentrales Widget und Layout
         central = QWidget()

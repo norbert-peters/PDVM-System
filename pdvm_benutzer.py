@@ -1,10 +1,31 @@
+# pdvm_benutzer.py
 import hashlib
 import os
 import json
 
+# Logging-Setup
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.FileHandler("pdvm_app.log"),
+        logging.StreamHandler()
+    ]
+)   
+
+# Hier wird die Klasse PdvmBenutzer definiert, die für die Benutzerverwaltung zuständig ist.
+# Diese Klasse enthält Methoden zur Passwort-Hashing, Passwort-Überprüfung und zur Konvertierung der Benutzerdaten in JSON-Format.
+# Außerdem wird ein statisches Attribut für den Standard-Hash-Algorithmus definiert.
+# Diese Klasse ist wichtig für die Sicherheit und Verwaltung der Benutzeranmeldedaten in der Anwendung.
+
+
 class PdvmBenutzer:
     def __init__(self, benutzer, password_hash, settings_json):
-        print(f"in Benutzer angekommen - benutzer: {benutzer} - passwort hash: {password_hash} - settings_json: {settings_json}")
+        logging.log(logging.INFO, f"in Benutzer angekommen - benutzer: {benutzer}")
+        logging.log(logging.INFO, f"passwort hash: {password_hash}")  
+        logging.log(logging.INFO, f"settings_json: {json.dumps(settings_json, indent=4)}")
         """
         :param benutzer: Der Benutzername, in der Regel die Email-Adresse.
         :param password_hash: Der gespeicherte Passwort-Hash (z.B. "hash:salt").
@@ -17,7 +38,6 @@ class PdvmBenutzer:
             self.settings = json.loads(settings_json)
         else:
             self.settings = settings_json
-        print(f"am Ende von init - benutzer: {self.benutzer} - passwort hash: {self.password_hash} - settings_json: {self.settings}")
 
     @staticmethod
     def hash_password(password, salt=None):
