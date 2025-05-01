@@ -56,7 +56,6 @@ class LoginApp(QWidget):
         hl_btn.addWidget(btn_login)
         hl_btn.addWidget(btn_quit)
         layout.addLayout(hl_btn)
-        print(f"Aktuelles Fokus-Widget: {self.focusWidget()}")
 
         # Set focus on the username input field
         self.username_input.setFocus()

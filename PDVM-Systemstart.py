@@ -1,10 +1,9 @@
-# MyApplication.py
+# PDVM-Systemstart.py
 import sys
 from pdvm_login import LoginApp
 from pdvm_menu_editor import MenuEditor
 from pdvm_view_manager import PdvmViewManager
-from pdvmsearchlistwidget import SearchListWidget
-#from pdvm_input_control import PdvmInputFrame
+from pdvm_search_list_widget import SearchListWidget
 import json
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QApplication
@@ -13,6 +12,18 @@ from PyQt5.QtCore import Qt
 
 from command_handler import CommandHandler
 from menu_handler import MenuHandler
+
+# Logging-Setup
+import logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.FileHandler("pdvm_app.log"),
+        logging.StreamHandler()
+    ]
+)
 
 class MainApp(QMainWindow):
     def __init__(self, user_daten):
@@ -35,7 +46,7 @@ class MainApp(QMainWindow):
         self.setWindowTitle(f"PDVM System - Hauptanwendung - {self.user_name}")
 
         self.startmenu_id = self.user_daten.get("Anwendungen", {}).get("MeineApps")
-        print(f"🔹 Starte mit Startmenu-ID: {self.startmenu_id}")
+        logging.INFO(f"🔹 Starte mit Startmenu-ID: {self.startmenu_id}")
 
         # Zentrales Widget und Layout
         central = QWidget()
