@@ -1,10 +1,16 @@
+# Ignoriere alle Dateien mit "test" im Namen
+*test*
+*.docx
+*.pdf
+*.pptx
+*.xlsx
+
+# Ignoriere __pycache__ und temporäre Dateien
 __pycache__/
 *.pyc
 *.pyo
-*.pyd
+*.tmp
 *.log
 .env
-.venv/
 *.sqlite3
-.idea/
-.vscode/
+*.db
