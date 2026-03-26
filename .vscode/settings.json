@@ -5,5 +5,19 @@
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "files.autoSave": "afterDelay",
-    "git.autofetch": "all"
+    "git.autofetch": "all",
+    "python.defaultInterpreterPath": "${workspaceFolder}/env/Scripts/python.exe",
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "env/": true
+    },
+    "files.watcherExclude": {
+        "**/__pycache__/**": true,
+        "**/env/**": true
+    },
+    "search.exclude": {
+        "**/env": true,
+        "**/__pycache__": true
+    }
 }
